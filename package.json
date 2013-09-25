@@ -1,0 +1,28 @@
+{ "author": "Ben Gourley"
+, "name": "cf-text-search"
+, "description": "Add full-text search functionality across multiple fields on cf services"
+, "version": "0.0.1"
+, "tags": []
+, "repository":
+  { "type": "git"
+  , "url": "git@github.com:clocklimited/cf-text-search"
+  }
+, "publishConfig": {
+    "registry":"http://npm.clockte.ch"
+  }
+, "main": ""
+, "scripts":
+  { "test": "./node_modules/.bin/pliers test"
+  }
+, "engines":
+  { "node": ">=0.8"
+  }
+, "dependencies":
+  {
+  }
+, "devDependencies":
+  { "mocha": "*"
+  , "should": "*"
+  , "pliers": "*"
+  }
+}
