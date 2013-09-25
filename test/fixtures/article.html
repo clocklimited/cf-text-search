@@ -1,0 +1,151 @@
+<section id="blog-post" class="two-column"><h1><a href="/tech-blogs/preventing-http-raise-hangup-error-on-destroyed-socket-write-from-crashing-your-nodejs-server">Preventing 'http: Raise hangup error on destroyed socket write' from crashing your node.js server</a></h1><div class="meta"><p>Posted on <em>Wednesday, 20 February 2013 @ 19:37 GMT</em> in <a href="/tech-blogs">tech-blogs</a> by <em>Paul Serby</em></p></div><p><a href="https://twitter.com/tomgco">@tomgco</a> and I were hacking late on a new Clock
+node.js project. The caffeine fueled <a href="https://twitter.com/tomgco">@tomgco</a> loves
+pounding browser refresh like a freaking machine gun, then I hear “Oh my web server has
+crashed!” Developers pummel refresh, it's a fact of life, but it doesn't normally cause the
+httpServer to crash. Earlier that day we'd upgraded node to 0.8.20 so it didn't take long to turn our attention to the changelog and then on to a tweet that Tom had spotted.</p>
+<p><a href="https://twitter.com/nodejs/status/303893363877363712"></a><a href="https://twitter.com/nodejs/status/303893363877363712">https://twitter.com/nodejs/status/303893363877363712</a></p>
+<p><strong>‘No more leaking memory’</strong>; This killer line fills me with mixed
+emotion. Memory leaks are our new worst enemy since switching to node.js. Sneaking up on us, killing our services at peak times and keeping me up at night reading the dtrace manual. Naturally I’m ecstatic to find there will be less of them, but at the same time, <strong>ALL MY NODE APPS ARE LEAKING
+MEMORY</strong> and the fix requires a code change. Dang!</p>
+<p>After some googling and testing we confirmed the following fix in 0.8.20 was now causing
+our development web server to crash:</p>
+<pre><code>  http: Raise hangup error on destroyed socket write (isaacs)</code></pre>
+<p>Here is the original commit:</p>
+<p><a href="https://github.com/isaacs/node/commit/e261156e7386e3d870543bee4218c7f106bfcf22"></a><a href="https://github.com/isaacs/node/commit/e261156e7386e3d870543bee4218c7f106bfcf22">https://github.com/isaacs/node/commit/e261156e7386e3d870543bee4218c7f106bfcf22</a></p>
+<p>Pulling down to the stable branch: <a href="https://github.com/joyent/node/pull/4775"></a><a href="https://github.com/joyent/node/pull/4775">https://github.com/joyent/node/pull/4775</a></p>
+<p>and found issues were already coming in:
+<a href="https://github.com/ether/etherpad-lite/issues/1541"></a><a href="https://github.com/ether/etherpad-lite/issues/1541">https://github.com/ether/etherpad-lite/issues/1541</a>
+<a href="https://github.com/LearnBoost/socket.io/issues/1160"></a><a href="https://github.com/LearnBoost/socket.io/issues/1160">https://github.com/LearnBoost/socket.io/issues/1160</a></p>
+<p>In case you missed it, this isn’t going to get fixed properly in 0.8</p>
+<pre><code>“The proper fix is to treat ECONNRESET correctly. However, this is a behavior/semantics change, and cannot land in a stable branch. So, the full-of-sad bandaid fix is to not put data into the output buffer if the socket is destroyed, and also remove anything that is in the output buffer when the HTTP request sees that it closes.”- issacs</code></pre>
+<p>We just needed a ‘bandaid’ on our 0.8 apps and I was actually glad to have good reason to retro fit Domains around our apps.</p>
+<h2>The Problem</h2>
+<p>Below is a simple web server that waits 5 seconds before responding. This will
+error in 0.8.20 when the client connection hangs up.</p>
+<pre><code>var http = require('http')
+
+http.createServer(function (req, res) {
+
+  // Wait 5 seconds before responding
+  setTimeout(function () {
+    res.writeHead(200, {'Content-Type': 'text/plain'})
+    res.end('Hello World\n')
+  }, 5000)
+
+}).listen(1337, '127.0.0.1')
+
+setInterval(function () {
+  console.log(process.memoryUsage().rss)
+}, 2000)
+
+console.log('Server running at http://127.0.0.1:1337/')</code></pre>
+<p>Running this server pre 0.8.20 you can:</p>
+<pre><code>  curl http://127.0.0.1:1337/ &amp; ; sleep 2 &amp;&amp; killall curl</code></pre>
+<p>Which will kill the connection atfer 2 seconds and you won't see any errors from
+the server but instead get a memory leak.</p>
+<p>Switch to 0.8.20. (We use <a href="https://npmjs.org/package/nave">nave</a>) to quickly switch node versions:</p>
+<pre><code>  nave use 0.8.20</code></pre>
+<p>Run the server, then connect run the curl oneliner</p>
+<pre><code>  curl http://127.0.0.1:1337/ &amp; ; sleep 2 &amp;&amp; killall curl</code></pre>
+<p>You'll see the server errors and dies.</p>
+<pre><code>timers.js:103
+            if (!process.listeners('uncaughtException').length) throw e;
+                                                                      ^
+Error: socket hang up
+    at createHangUpError (http.js:1360:15)
+    at ServerResponse.OutgoingMessage._writeRaw (http.js:507:26)
+    at ServerResponse.OutgoingMessage._send (http.js:476:15)
+    at ServerResponse.OutgoingMessage.write (http.js:740:18)
+    at ServerResponse.OutgoingMessage.end (http.js:882:16)
+    at Object._onTimeout (/socket-hangup/server.js:8:9)
+    at Timer.list.ontimeout (timers.js:101:19)</code></pre>
+<h2>Our Solution</h2>
+<p>Wrap the request and response in a domain.</p>
+<pre><code>var http = require('http')
+  , domain = require('domain')
+  , serverDomain = domain.create()
+
+// Domain for the server
+serverDomain.run(function () {
+
+  http.createServer(function (req, res) {
+
+    var reqd = domain.create()
+    reqd.add(req)
+    reqd.add(res)
+
+    // On error dispose of the domain
+    reqd.on('error', function (error) {
+      console.error('Error', error, req.url)
+      reqd.dispose()
+    })
+
+    // Wait 5 seconds before responding
+    setTimeout(function () {
+      res.writeHead(200, {'Content-Type': 'text/plain'})
+      res.end('Hello World\n')
+    }, 5000)
+
+  }).listen(1337, '127.0.0.1')
+
+})
+
+
+setInterval(function () {
+  console.log(process.memoryUsage().rss)
+  if (typeof gc === 'function') {
+    gc()
+  }
+}, 2000)
+
+console.log('Server running at http://127.0.0.1:1337/')</code></pre>
+<h2>Express</h2>
+<p>If you are using express 3 you can apply a fix like this</p>
+<pre><code>var http = require('http')
+  , domain = require('domain')
+  , serverDomain = domain.create()
+  , express = require('express')
+  , app = express()
+
+app.get('/', function (req, res) {
+
+  // Wait 5 seconds before responding
+  setTimeout(function () {
+    res.send('Hello World')
+  }, 5000)
+
+})
+
+// Domain for the server
+serverDomain.run(function () {
+
+  http.createServer(function (req, res) {
+
+    var reqd = domain.create()
+    reqd.add(req)
+    reqd.add(res)
+
+    // On error dispose of the domain
+    reqd.on('error', function (error) {
+      console.error('Error', error.code, error.message, req.url)
+      reqd.dispose()
+    })
+
+    // Pass the request to express
+    app(req, res)
+
+  }).listen(1337, '127.0.0.1')
+
+})
+
+setInterval(function () {
+  console.log(process.memoryUsage().rss)
+  if (typeof gc === 'function') {
+    gc()
+  }
+}, 2000)
+
+console.log('Server running at http://127.0.0.1:1337/')</code></pre>
+<p>We’ve not got this in production yet but this patch looks like it is going to
+get us by. If you have a better solution please let us know.</p>
+<div class="like-post"><p>Like what you've read?</p><div class="social-icons"><iframe allowtransparency="true" frameborder="0" scrolling="no" src="http://platform.twitter.com/widgets/tweet_button.1363148939.html#_=1363626278649&amp;count=none&amp;id=twitter-widget-0&amp;lang=en&amp;original_referer=http%3A%2F%2Fclock.co.uk%2Ftech-blogs%2Fpreventing-http-raise-hangup-error-on-destroyed-socket-write-from-crashing-your-nodejs-server&amp;size=m&amp;text=http%3A%2F%2Fclock.co.uk%2Ftech-blogs%2Fpreventing-http-raise-hangup-error-on-destroyed-socket-write-from-crashing-your-nodejs-server&amp;url=http%3A%2F%2Fclock.co.uk%2Ftech-blogs%2Fpreventing-http-raise-hangup-error-on-destroyed-socket-write-from-crashing-your-nodejs-server&amp;via=clock" class="twitter-share-button twitter-count-none" style="width: 56px; height: 20px;" title="Twitter Tweet Button" data-twttr-rendered="true"></iframe><div data-href="http://clock.co.uk/tech-blogs/preventing-http-raise-hangup-error-on-destroyed-socket-write-from-crashing-your-nodejs-server" data-send="false" data-layout="button_count" data-width="450" class="fb-like fb_edge_widget_with_comment fb_iframe_widget" fb-xfbml-state="rendered"><span style="height: 20px; width: 75px;"><iframe id="f2a1d4ba2c" name="f1874fa37c" scrolling="no" style="border: none; overflow: hidden; height: 20px; width: 75px;" title="Like this content on Facebook." class="fb_ltr" src="http://www.facebook.com/plugins/like.php?api_key=&amp;locale=en_GB&amp;sdk=joey&amp;channel_url=http%3A%2F%2Fstatic.ak.facebook.com%2Fconnect%2Fxd_arbiter.php%3Fversion%3D19%23cb%3Df389dafd4%26origin%3Dhttp%253A%252F%252Fclock.co.uk%252Ff323656ecc%26domain%3Dclock.co.uk%26relation%3Dparent.parent&amp;href=http%3A%2F%2Fclock.co.uk%2Ftech-blogs%2Fpreventing-http-raise-hangup-error-on-destroyed-socket-write-from-crashing-your-nodejs-server&amp;node_type=link&amp;width=450&amp;layout=button_count&amp;colorscheme=light&amp;show_faces=false&amp;send=false&amp;extended_social_context=false"></iframe></span></div></div></div><div id="disqus_thread"><iframe id="dsq1" data-disqus-uid="1" allowtransparency="true" frameborder="0" role="application" style="width: 100%; border: none; overflow: hidden; height: 850px;" width="100%" src="http://disqus.com/embed/comments/?f=clockblog&amp;t_u=http%3A%2F%2Fclock.co.uk%2Ftech-blogs%2Fpreventing-http-raise-hangup-error-on-destroyed-socket-write-from-crashing-your-nodejs-server&amp;t_t=Preventing%20'http%3A%20Raise%20hangup%20error%20on%20destroyed%20socket%20write'%20from%20crashing%20your%20node.js%20server&amp;t_d=Preventing%20'http%3A%20Raise%20hangup%20error%20on%20destroyed%20socket%20write'%20from%20crashing%20your%20node.js%20server&amp;s_o=popular#1" scrolling="no" horizontalscrolling="no" verticalscrolling="no"></iframe><iframe id="dsq3" data-disqus-uid="3" allowtransparency="true" frameborder="0" role="application" style="width: 100%; border: none; overflow: hidden; display: none;" width="100%" src="http://mediacdn.disqus.com/1363376898/build/next-switches/client.html#3"></iframe><iframe id="dsq-indicator-north" data-disqus-uid="-indicator-north" allowtransparency="true" frameborder="0" role="application" style="width: 624px; border: none; overflow: hidden; top: 0px; min-width: 624px; max-width: 624px; position: fixed; max-height: 29px; min-height: 29px; height: 29px; display: none;" scrolling="no"></iframe><iframe id="dsq-indicator-south" data-disqus-uid="-indicator-south" allowtransparency="true" frameborder="0" role="application" style="width: 624px; border: none; overflow: hidden; bottom: 0px; min-width: 624px; max-width: 624px; position: fixed; max-height: 29px; min-height: 29px; height: 29px; display: none;" scrolling="no"></iframe></div><noscript>Please enable JavaScript to view the&lt;a href="http://disqus.com/?ref_noscript"&gt;comments powered by Disqus.&lt;/a&gt;</noscript></section>

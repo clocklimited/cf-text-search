@@ -1,28 +1,33 @@
-{ "author": "Ben Gourley"
-, "name": "cf-text-search"
-, "description": "Add full-text search functionality across multiple fields on cf services"
-, "version": "0.0.1"
-, "tags": []
-, "repository":
-  { "type": "git"
-  , "url": "git@github.com:clocklimited/cf-text-search"
-  }
-, "publishConfig": {
-    "registry":"http://npm.clockte.ch"
-  }
-, "main": ""
-, "scripts":
-  { "test": "./node_modules/.bin/pliers test"
-  }
-, "engines":
-  { "node": ">=0.8"
-  }
-, "dependencies":
-  {
-  }
-, "devDependencies":
-  { "mocha": "*"
-  , "should": "*"
-  , "pliers": "*"
+{
+  "author": "Ben Gourley",
+  "name": "cf-text-search",
+  "description": "Add full-text search functionality across multiple fields on cf services",
+  "version": "0.0.1",
+  "tags": [],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:clocklimited/cf-text-search"
+  },
+  "publishConfig": {
+    "registry": "http://npm.clockte.ch"
+  },
+  "main": "text-search.js",
+  "scripts": {
+    "test": "./node_modules/.bin/mocha -R spec"
+  },
+  "engines": {
+    "node": ">=0.8"
+  },
+  "dependencies": {
+    "lodash": "~2.1.0",
+    "natural": "~0.1.21"
+  },
+  "devDependencies": {
+    "mocha": "*",
+    "should": "*",
+    "pliers": "*",
+    "crud-service": "0.0.5",
+    "schemata": "0.0.7",
+    "save": "0.0.19"
   }
 }
