@@ -139,7 +139,7 @@ describe('Text Search (service delegate)', function () {
   describe('search()', function () {
 
     it('should be a function', function () {
-      search.should.be.a('function')
+      search.should.be.type('function')
     })
 
     it('should let `query` argument be optional', function (done) {
