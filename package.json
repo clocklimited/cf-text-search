@@ -1,7 +1,7 @@
 {
   "author": "Ben Gourley",
   "name": "cf-text-search",
-  "description": "Add full-text search functionality across multiple fields on cf services",
+  "description": "Add full-text search functionality onto cf services",
   "version": "0.1.0",
   "tags": [],
   "repository": {
@@ -19,8 +19,7 @@
     "node": ">=0.8"
   },
   "dependencies": {
-    "lodash": "~2.1.0",
-    "natural": "~0.1.21"
+    "lodash": "~2.1.0"
   },
   "devDependencies": {
     "mocha": "*",

@@ -1,9 +1,8 @@
 # cf-text-search
 
-Add full-text search functionality across multiple fields on cf services
+Add full-text search functionality onto cf services. Uses mongo's full text search functionality. Requires **Mongo v2.6+**.
 
-Text search adds a database text index property to services,
-facilitating text searches across multiple fields.
+Modifies the passed in query, adding the `$text` property as per [http://docs.mongodb.org/manual/reference/operator/query/text/](http://docs.mongodb.org/manual/reference/operator/query/text/).
 
 ## Installation
 
@@ -15,42 +14,28 @@ npm install cf-text-search
 
 ```js
 var textSearch = require('cf-text-search')
+
+service.search = textSearch(service)
+
+service.search('my search terms', function (err, results) {})
 ```
 
-Pass in the service and a map of property tokenizers. A tokenizer is a function
-that takes a property and returns an array of strings.
+### var search = textSearch(service)
 
-Example of tokenizer usage:
+- `service` is a `crud-service`
 
-For a service that stores things that look like this…
+### search(searchTerms, query={}, options={}, cb)
 
-```js
-{ name: 'A thing'
-, body: 'Something about a thing'
-, tags [ { tag: 'thing', type: 'category' } ]
-}
-```
+- `searchTerms` - a string which gets pass through to mongo's full text search
+- `query` - optional, an additional object query to filter the results
+- `options` - optional, any search options e.g. skip, limit
+- `cb` - the callback function, gets called with (err, results)
 
-The map of property tokenizers would look like this…
+## Score
+The `score` of the document is returned on all documents as described here:
+[http://docs.mongodb.org/manual/reference/operator/projection/meta/](http://docs.mongodb.org/manual/reference/operator/projection/meta/).
 
-```js
-{ name: textSearch.tokenize // A simple string tokenizer is available
-, body: textSearch.tokenize
-, tags: function (tags) {
-    if (Array.isArray(tags)) return tags.map(function (tag) { return tag.tag })
-  }
-}
-```
-
-The textSearch function returns a 'search' endpoint that can be used to search
-the textIndex, e.g.:
-
-```js
-service.search = textSearch(service, propertyTokenizers)
-
-service.search([ 'my', 'search', 'terms' ], function (err, results) {
-})
-```
+If using in conjunction with [schemata](https://www.npmjs.org/package/schemata), you'll need to add a `score` property to your schema so that it doesn't get stripped out.
 
 ## Credits
 Built by developers at [Clock](http://clock.co.uk).
