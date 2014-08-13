@@ -1,3 +1,6 @@
+## 1.1.0
+#### modify the first argument to `#search()` to be either a string or an array
+
 ## 1.0.0
 
 - Refactor out `_textIndex` properties in favour of using mongo's full text search

@@ -72,6 +72,11 @@ describe('Text Search (service delegate)', function () {
       query.should.eql({ $text: { $search: 'hello' }, a: 1 })
     })
 
+    it('should let `searchTerms` be an array', function () {
+      var query = buildSearchQuery([ 'a', 'b', 'c', 'd' ], { a: 1 })
+      query.should.eql({ $text: { $search: 'a b c d' }, a: 1 })
+    })
+
   })
 
   describe('extendOptions()', function () {

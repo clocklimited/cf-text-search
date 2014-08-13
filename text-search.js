@@ -62,6 +62,8 @@ function textSearch(service) {
 function buildSearchQuery(searchString, query) {
   if (!query) query = {}
   query.$text = { $search: searchString }
+  // Tolerant of searchString being an array
+  if (Array.isArray(searchString)) searchString = searchString.join(' ')
   return query
 }
 
