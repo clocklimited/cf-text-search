@@ -61,7 +61,12 @@ function textSearch(service) {
 
 function buildSearchQuery(searchString, query) {
   if (!query) query = {}
-  query.$text = { $search: searchString }
+  // Tolerant of searchString being an array
+  if (Array.isArray(searchString)) searchString = searchString.join(' ')
+
+  // Only add a $text query if there is a search string
+  // Searching for an empty string in mongo's text search returns nothing
+  if (searchString !== '') query.$text = { $search: searchString }
   return query
 }
 

@@ -72,6 +72,21 @@ describe('Text Search (service delegate)', function () {
       query.should.eql({ $text: { $search: 'hello' }, a: 1 })
     })
 
+    it('should let `searchTerms` be an array', function () {
+      var query = buildSearchQuery([ 'a', 'b', 'c', 'd' ], { a: 1 })
+      query.should.eql({ $text: { $search: 'a b c d' }, a: 1 })
+    })
+
+    it('should not add a $text query if `searchTerms` is empty array', function () {
+      var query = buildSearchQuery([], { a: 1 })
+      query.should.eql({ a: 1 })
+    })
+
+    it('should not add a $text query if `searchTerms` is an empty string', function () {
+      var query = buildSearchQuery('', { a: 1 })
+      query.should.eql({ a: 1 })
+    })
+
   })
 
   describe('extendOptions()', function () {

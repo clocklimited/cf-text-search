@@ -26,7 +26,7 @@ service.search('my search terms', function (err, results) {})
 
 ### search(searchTerms, query={}, options={}, cb)
 
-- `searchTerms` - a string which gets pass through to mongo's full text search
+- `searchTerms` - a string which gets pass through to mongo's full text search, can be an array of strings
 - `query` - optional, an additional object query to filter the results
 - `options` - optional, any search options e.g. skip, limit
 - `cb` - the callback function, gets called with (err, results)
