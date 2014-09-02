@@ -93,7 +93,7 @@ describe('Text Search (service delegate)', function () {
 
     it('should add a $meta option to return text search score', function () {
       var options = extendOptions({ skip: 10 })
-      options.should.eql({ skip: 10, score: { $meta: 'textScore' } })
+      options.should.eql({ skip: 10, fields: { score: { $meta: 'textScore' } } })
     })
 
   })
