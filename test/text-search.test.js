@@ -87,6 +87,11 @@ describe('Text Search (service delegate)', function () {
       query.should.eql({ a: 1 })
     })
 
+    it('should cast searchTerms to a string', function () {
+      var query = buildSearchQuery(1)
+      should.equal(typeof query.$text.$search, 'string')
+    })
+
   })
 
   describe('extendOptions()', function () {

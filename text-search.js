@@ -66,7 +66,7 @@ function buildSearchQuery(searchString, query) {
 
   // Only add a $text query if there is a search string
   // Searching for an empty string in mongo's text search returns nothing
-  if (searchString !== '') query.$text = { $search: searchString }
+  if (searchString !== '') query.$text = { $search: String(searchString) }
   return query
 }
 
