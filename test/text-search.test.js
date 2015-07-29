@@ -96,6 +96,11 @@ describe('Text Search (service delegate)', function () {
       options.should.eql({ skip: 10, fields: { score: { $meta: 'textScore' } } })
     })
 
+    it('should not override other properties in options.fields', function () {
+      var options = extendOptions({ fields: { a: true } })
+      options.should.eql({ fields: { a: true, score: { $meta: 'textScore' } } })
+    })
+
   })
 
 })
