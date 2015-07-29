@@ -71,5 +71,6 @@ function buildSearchQuery(searchString, query) {
 }
 
 function extendOptions(options) {
-  return _.extend(options, { fields: { score: { $meta: 'textScore' } } })
+  options.fields = _.extend({}, options.fields, { score: { $meta: 'textScore' } })
+  return options
 }
