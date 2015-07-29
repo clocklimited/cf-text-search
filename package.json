@@ -2,7 +2,7 @@
   "author": "Ben Gourley",
   "name": "cf-text-search",
   "description": "Add full-text search functionality onto cf services",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "tags": [],
   "repository": {
     "type": "git",
