@@ -19,14 +19,14 @@
     "node": ">=0.8"
   },
   "dependencies": {
-    "lodash": "^3.10.0"
+    "lodash": "^4.17.11"
   },
   "devDependencies": {
-    "crud-service": "^0.2.0",
-    "mocha": "^2.2.5",
+    "crud-service": "^1.1.2",
+    "mocha": "^6.1.4",
     "pliers": "^1.2.1",
     "save": "^2.1.1",
-    "schemata": "^2.1.2",
-    "should": "^7.0.2"
+    "schemata": "^7.0.1",
+    "should": "^13.2.3"
   }
 }
