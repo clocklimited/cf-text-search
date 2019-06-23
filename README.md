@@ -1,5 +1,7 @@
 # cf-text-search
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/clocklimited/cf-text-search.svg)](https://greenkeeper.io/)
+
 Add full-text search functionality onto cf services. Uses mongo's full text search functionality. Requires **Mongo v2.6+**.
 
 Modifies the passed in query, adding the `$text` property as per [http://docs.mongodb.org/manual/reference/operator/query/text/](http://docs.mongodb.org/manual/reference/operator/query/text/).
