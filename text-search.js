@@ -38,7 +38,7 @@ function textSearch(service) {
       options = {}
     }
 
-    options = extendOptions(options)
+    options = extendOptions(options, searchTerms)
     var qry = buildSearchQuery(searchTerms, query)
     service.count(qry, function (err, count) {
       if (err) return cb(err)
@@ -70,7 +70,8 @@ function buildSearchQuery(searchString, query) {
   return query
 }
 
-function extendOptions(options) {
+function extendOptions(options, searchTerms) {
+  if (searchTerms === '') return options
   options.fields = _.extend({}, options.fields, { score: { $meta: 'textScore' } })
   return options
 }
