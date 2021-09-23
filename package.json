@@ -23,7 +23,6 @@
   "devDependencies": {
     "crud-service": "^0.2.0",
     "mocha": "^2.2.5",
-    "pliers": "^1.2.1",
     "save": "^2.1.1",
     "schemata": "^2.1.2",
     "should": "^7.0.2"
