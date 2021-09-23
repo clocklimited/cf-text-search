@@ -1,0 +1,34 @@
+version: 2
+
+jobs:
+  build:
+    name: 'Test'
+    docker:
+      - image: circleci/node:10
+    resource_class: small
+    working_directory: ~/cf-text-search
+    parallelism: 4
+    steps:
+      - checkout
+      - run:
+          name: Switch Node Version
+          command: |
+            wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
+            export NVM_DIR="$HOME/.nvm"
+            . "$NVM_DIR/nvm.sh" --install
+            echo 'export NVM_DIR="$HOME/.nvm"' >> $BASH_ENV;
+            echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> $BASH_ENV;
+            case $CIRCLE_NODE_INDEX in \
+              0) NODE_VERSION=10 ;; \
+              1) NODE_VERSION=12 ;; \
+              2) NODE_VERSION=14 ;; \
+              3) NODE_VERSION=16 ;; \
+            esac;
+            nvm install $NODE_VERSION && nvm alias default $NODE_VERSION
+      - run:
+          name: Print Versions
+          command: |
+            node --version
+            npm --version
+      - run: npm install
+      - run: npm test

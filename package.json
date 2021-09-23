@@ -12,19 +12,17 @@
     "registry": "https://registry.npmjs.org"
   },
   "main": "text-search.js",
+  "files": ["text-search.js"],
   "scripts": {
     "test": "./node_modules/.bin/mocha -R spec"
   },
   "engines": {
-    "node": ">=0.8"
+    "node": ">=4"
   },
-  "dependencies": {
-    "lodash": "^3.10.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "crud-service": "^0.2.0",
     "mocha": "^2.2.5",
-    "pliers": "^1.2.1",
     "save": "^2.1.1",
     "schemata": "^2.1.2",
     "should": "^7.0.2"
