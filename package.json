@@ -16,8 +16,7 @@
     "test": "./node_modules/.bin/mocha -R spec"
   },
   "engines": {
-    "node": ">=0.8"
-  },
+    "node": ">=4"
   },
   "dependencies": {},
   "devDependencies": {
