@@ -12,6 +12,7 @@
     "registry": "https://registry.npmjs.org"
   },
   "main": "text-search.js",
+  "files": ["text-search.js"],
   "scripts": {
     "test": "./node_modules/.bin/mocha -R spec"
   },
