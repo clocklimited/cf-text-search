@@ -5,8 +5,6 @@ module.exports.buildSearchQuery = buildSearchQuery
 // Expose the extend options function for testing
 module.exports.extendOptions = extendOptions
 
-var _ = require('lodash')
-
 /*
  * The textSearch function returns a 'search' endpoint that can be used to search
  * the textIndex, e.g.:
@@ -72,6 +70,6 @@ function buildSearchQuery(searchString, query) {
 
 function extendOptions(options, searchTerms) {
   if (searchTerms === '') return options
-  options.fields = _.extend({}, options.fields, { score: { $meta: 'textScore' } })
+  options.fields = Object.assign({}, options.fields, { score: { $meta: 'textScore' } })
   return options
 }
